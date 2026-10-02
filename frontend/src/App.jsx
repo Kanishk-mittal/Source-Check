@@ -104,14 +104,6 @@ export default function App() {
         activeUser={activeUser}
         onSelectUser={handleSelectUser}
       />
-
-      {/* Footer */}
-      <footer className="bg-pine_teal-900 border-t border-pine_teal-700/50 py-6 text-center text-xs text-dust_grey-500 font-mono">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Quadtree pHash & RSA Provenance Registry &bull; Earth-tone Forensic Suite</span>
-          <span>FastAPI 3.14 &bull; MongoDB &bull; Vite + Tailwind CSS</span>
-        </div>
-      </footer>
     </div>
   );
 }

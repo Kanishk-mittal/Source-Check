@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, KeyRound, Image as ImageIcon, Search, Database, User } from 'lucide-react';
+import { KeyRound, Image as ImageIcon, Search, Database, User } from 'lucide-react';
 
 export default function Header({ activeTab, setActiveTab, onOpenKeyModal, activeUser, stats }) {
   const tabs = [
@@ -12,24 +12,15 @@ export default function Header({ activeTab, setActiveTab, onOpenKeyModal, active
     <header className="bg-pine_teal text-dust_grey-800 border-b border-pine_teal-600/50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          
+
           {/* Logo & Title */}
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-hunter_green flex items-center justify-center border border-dry_sage shadow-inner">
-              <ShieldCheck className="w-6 h-6 text-dry_sage" />
-            </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-lg tracking-tight text-dust_grey-800">
-                  QUADTREE FORENSICS
-                </span>
-                <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-hunter_green/80 text-dry_sage rounded-full border border-dry_sage/30">
-                  pHash + RSA
+                  Source Check
                 </span>
               </div>
-              <p className="text-xs text-dust_grey-500 font-medium">
-                Cryptographic Multimedia Provenance & Fragile Tamper Localization
-              </p>
             </div>
           </div>
 
@@ -42,11 +33,10 @@ export default function Header({ activeTab, setActiveTab, onOpenKeyModal, active
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                    isActive
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${isActive
                       ? 'bg-fern text-white shadow-md'
                       : 'text-dust_grey-500 hover:text-dust_grey-800 hover:bg-pine_teal-800/50'
-                  }`}
+                    }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-dry_sage-600' : 'text-dust_grey-500'}`} />
                   {tab.label}
@@ -91,9 +81,8 @@ export default function Header({ activeTab, setActiveTab, onOpenKeyModal, active
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${
-                  isActive ? 'bg-fern text-white' : 'text-dust_grey-500'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${isActive ? 'bg-fern text-white' : 'text-dust_grey-500'
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {tab.label}
