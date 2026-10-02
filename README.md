@@ -1,4 +1,4 @@
-# Cryptographic Multimedia Forensics & Image Provenance Registry
+# Source Check
 
 A full-stack forensic verification platform that combines hierarchical **Perceptual Hash (pHash) Quadtrees**, **RSA-2048 digital signatures**, and **BK-Tree discrete metric indexing**. The system provides fragile tamper localization (pinpointing tampered sectors down to fine quadrants) while remaining robust against compression noise and social media re-encodings.
 
