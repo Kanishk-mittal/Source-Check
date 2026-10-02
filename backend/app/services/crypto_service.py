@@ -128,3 +128,19 @@ class CryptoService:
             return (priv_pub_numbers.n == pub_numbers.n and priv_pub_numbers.e == pub_numbers.e)
         except Exception:
             return False
+
+    @staticmethod
+    def compute_private_key_hash(private_key_pem: str) -> str:
+        """
+        Computes canonical SHA-256 hash of the normalized PKCS#8 DER private key.
+        Allows the backend to authenticate the private key without storing the raw private key.
+        """
+        priv = serialization.load_pem_private_key(private_key_pem.strip().encode('utf-8'), password=None)
+        if not isinstance(priv, rsa.RSAPrivateKey):
+            raise ValueError("Key is not an RSA private key.")
+        der_bytes = priv.private_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption()
+        )
+        return hashlib.sha256(der_bytes).hexdigest()

@@ -1,109 +1,136 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import KeyModal from './components/KeyModal';
+import AuthModal from './components/AuthModal';
 import RegisterImage from './components/RegisterImage';
 import VerifyImage from './components/VerifyImage';
-import RegistryExplorer from './components/RegistryExplorer';
-import { listUsers, listImages, getStats } from './api';
+import MyImages from './components/MyImages';
+import { listImages, getStats } from './api';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('register');
-  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [activeUser, setActiveUser] = useState(null);
-  const [activePrivateKey, setActivePrivateKey] = useState('');
+  // Authentication state: check sessionStorage for existing session
+  const [activeUser, setActiveUser] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('provenance_active_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const isAuthenticated = !!activeUser;
+
+  // View state: 'verify' | 'my_images' | 'register_image'
+  // Unauthenticated users ALWAYS default to 'verify'. Authenticated users default to 'my_images'.
+  const [currentView, setCurrentView] = useState(() => {
+    const stored = sessionStorage.getItem('provenance_active_user');
+    return stored ? 'my_images' : 'verify';
+  });
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login');
   const [registeredImages, setRegisteredImages] = useState([]);
   const [stats, setStats] = useState(null);
 
-  // Load initial users, images, and stats
-  const fetchData = async () => {
+  const fetchRegistryData = async () => {
     try {
-      const [usersData, imagesData, statsData] = await Promise.all([
-        listUsers().catch(() => []),
+      const [imagesData, statsData] = await Promise.all([
         listImages().catch(() => []),
         getStats().catch(() => null),
       ]);
-      setUsers(usersData);
       setRegisteredImages(imagesData);
       setStats(statsData);
-
-      // Auto-select first user if none selected
-      if (!activeUser && usersData.length > 0) {
-        setActiveUser(usersData[0]);
-      }
     } catch (err) {
-      console.error('Failed to load initial data:', err);
+      console.error('Failed to load registry data:', err);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchRegistryData();
   }, []);
 
-  const handleUserCreated = (newUser, privateKeyPem) => {
-    setUsers((prev) => [newUser, ...prev]);
-    setActiveUser(newUser);
-    setActivePrivateKey(privateKeyPem);
+  const handleAuthSuccess = (user, vaultSaved) => {
+    setActiveUser(user);
+    sessionStorage.setItem('provenance_active_user', JSON.stringify(user));
+    setCurrentView('my_images');
+    setIsAuthModalOpen(false);
+    fetchRegistryData();
   };
 
-  const handleSelectUser = (user) => {
-    setActiveUser(user);
-    // Clear private key if switching to another user so user enters/uploads their own key
-    if (user.id !== activeUser?.id) {
-      setActivePrivateKey('');
-    }
+  const handleLogout = () => {
+    setActiveUser(null);
+    sessionStorage.removeItem('provenance_active_user');
+    setCurrentView('verify');
   };
 
   const handleImageRegistered = (newRecord) => {
     setRegisteredImages((prev) => [newRecord, ...prev]);
-    fetchData();
+    fetchRegistryData();
   };
 
   return (
     <div className="min-h-screen bg-dust_grey-900 flex flex-col font-sans">
-      {/* Navigation Header */}
+      
+      {/* Dynamic Header */}
       <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenKeyModal={() => setIsKeyModalOpen(true)}
+        isAuthenticated={isAuthenticated}
         activeUser={activeUser}
+        currentView={currentView}
+        onNavigateHome={() => setCurrentView(isAuthenticated ? 'my_images' : 'verify')}
+        onNavigateVerify={() => setCurrentView('verify')}
+        onNavigateUpload={() => setCurrentView('register_image')}
+        onOpenAuthModal={() => {
+          setAuthModalMode('login');
+          setIsAuthModalOpen(true);
+        }}
+        onLogout={handleLogout}
         stats={stats}
       />
 
-      {/* Main Content Area */}
+      {/* Main App Content View */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'register' && (
-          <RegisterImage
-            activeUser={activeUser}
-            activePrivateKey={activePrivateKey}
-            onImageRegistered={handleImageRegistered}
-            onOpenKeyModal={() => setIsKeyModalOpen(true)}
-          />
-        )}
-
-        {activeTab === 'verify' && (
+        
+        {/* 1. PUBLIC / FORENSIC VERIFICATION VIEW */}
+        {currentView === 'verify' && (
           <VerifyImage
             registeredImages={registeredImages}
           />
         )}
 
-        {activeTab === 'ledger' && (
-          <RegistryExplorer
+        {/* 2. AUTHENTICATED "MY IMAGES" DASHBOARD VIEW */}
+        {currentView === 'my_images' && isAuthenticated && (
+          <MyImages
             registeredImages={registeredImages}
-            onSelectForVerify={() => setActiveTab('verify')}
+            activeUser={activeUser}
+            onNavigateToUpload={() => setCurrentView('register_image')}
+          />
+        )}
+
+        {/* 3. UPLOAD / REGISTER IMAGE VIEW */}
+        {currentView === 'register_image' && isAuthenticated && (
+          <RegisterImage
+            activeUser={activeUser}
+            onImageRegistered={handleImageRegistered}
+            onBackToMyImages={() => setCurrentView('my_images')}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
           />
         )}
       </main>
 
-      {/* RSA Key Management Modal */}
-      <KeyModal
-        isOpen={isKeyModalOpen}
-        onClose={() => setIsKeyModalOpen(false)}
-        onUserCreated={handleUserCreated}
-        users={users}
-        activeUser={activeUser}
-        onSelectUser={handleSelectUser}
+      {/* Auth Modal (Login / Register / Remember Me Vault) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        initialMode={authModalMode}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
       />
+
+      {/* Footer */}
+      <footer className="bg-pine_teal-900 border-t border-pine_teal-700/50 py-6 text-center text-xs text-dust_grey-500 font-mono">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>Quadtree pHash & RSA Provenance Registry &bull; Earth-tone Forensic Suite</span>
+          <span>FastAPI 3.14 &bull; MongoDB &bull; Web Crypto &bull; Vite</span>
+        </div>
+      </footer>
     </div>
   );
 }

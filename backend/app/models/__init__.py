@@ -1,4 +1,11 @@
-from app.models.user import UserCreate, UserInDB, UserResponse, UserRegisterResponse
+from app.models.user import (
+    UserCreate,
+    UserInDB,
+    UserResponse,
+    UserRegisterResponse,
+    UserLoginRequest,
+    UserLoginResponse,
+)
 from app.models.image import (
     Dimensions,
     BoundingBox,

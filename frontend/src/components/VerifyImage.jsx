@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { UploadCloud, Search, ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, FileQuestion, ArrowRight, UserCheck } from 'lucide-react';
 import { verifyImage } from '../api';
 import TamperHeatmap from './TamperHeatmap';
-import DrilldownTrace from './DrilldownTrace';
 
 export default function VerifyImage({ registeredImages = [] }) {
   const [file, setFile] = useState(null);
@@ -89,19 +88,6 @@ export default function VerifyImage({ registeredImages = [] }) {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      
-      {/* Intro Banner */}
-      <div className="bg-dry_sage-900 border border-dry_sage-600/40 rounded-xl p-6 text-pine_teal-100 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
-        <div>
-          <h2 className="text-xl font-black text-pine_teal-100 flex items-center gap-2">
-            <Search className="w-6 h-6 text-fern" />
-            Forensic Provenance Verification & Tamper Localization
-          </h2>
-          <p className="text-xs text-pine_teal-300 mt-1 max-w-2xl">
-            Upload any query image. The system computes its 64-bit root pHash, searches the BK-Tree index ($\le 15$ distance threshold), verifies the author's RSA-2048 digital signature, and executes top-down $O(\log N)$ Quadtree drill-down to pinpoint exact tampered sectors.
-          </p>
-        </div>
-      </div>
 
       {error && (
         <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-xl text-xs text-red-200 flex items-center gap-3">
@@ -303,11 +289,6 @@ export default function VerifyImage({ registeredImages = [] }) {
               dimensions={result.dimensions}
               drilldownNodes={result.drilldown_nodes}
             />
-          )}
-
-          {/* O(log N) Quadtree Pruning Trace */}
-          {result.drilldown_nodes && result.drilldown_nodes.length > 0 && (
-            <DrilldownTrace nodes={result.drilldown_nodes} />
           )}
 
         </div>

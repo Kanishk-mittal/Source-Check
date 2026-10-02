@@ -13,6 +13,22 @@ export async function registerUser(username, email) {
   return res.json();
 }
 
+export async function loginUser(username, privateKeyPem) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: username.trim(),
+      private_key_pem: privateKeyPem.trim()
+    }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Login failed. Please check username and private key.');
+  }
+  return res.json();
+}
+
 export async function listUsers() {
   const res = await fetch(`${API_BASE}/auth/users`);
   if (!res.ok) throw new Error('Failed to fetch users');

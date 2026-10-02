@@ -42,6 +42,7 @@ class UserInDB(BaseModel):
     username: str
     email: str
     public_key_pem: str
+    private_key_hash: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = {
@@ -56,6 +57,16 @@ class UserResponse(BaseModel):
     email: str
     public_key_pem: str
     created_at: datetime
+
+
+class UserLoginRequest(BaseModel):
+    username: str = Field(..., description="User's unique username")
+    private_key_pem: str = Field(..., description="User's RSA Private Key in PEM format")
+
+
+class UserLoginResponse(BaseModel):
+    user: UserResponse
+    message: str = "Login successful. Author identity authenticated."
 
 
 class UserRegisterResponse(BaseModel):

@@ -35,6 +35,11 @@ def test_rsa_keygen_and_signature():
     tampered_json = canonical_json.replace("root", "hacked")
     assert CryptoService.verify_tree_signature(tampered_json, sig_b64, pub_pem) is False
 
+    # 6. Private key hash check
+    key_hash = CryptoService.compute_private_key_hash(priv_pem)
+    assert len(key_hash) == 64
+    assert key_hash == CryptoService.compute_private_key_hash(priv_pem)
+
 
 def test_quadtree_decomposition_and_tampering():
     # Create base image with distinct quadrant colors

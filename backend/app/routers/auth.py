@@ -7,6 +7,8 @@ from app.models.user import (
     UserInDB,
     UserResponse,
     UserRegisterResponse,
+    UserLoginRequest,
+    UserLoginResponse,
 )
 from app.services.crypto_service import CryptoService
 
@@ -34,11 +36,13 @@ async def register_user(payload: UserCreate):
 
     # Generate RSA 2048-bit keypair
     private_pem, public_pem = CryptoService.generate_rsa_keypair()
+    private_key_hash = CryptoService.compute_private_key_hash(private_pem)
 
     user_in_db = UserInDB(
         username=payload.username,
         email=payload.email,
         public_key_pem=public_pem,
+        private_key_hash=private_key_hash,
     )
 
     doc = user_in_db.model_dump(by_alias=True, exclude=["id"])
@@ -55,6 +59,67 @@ async def register_user(payload: UserCreate):
     return UserRegisterResponse(
         user=user_resp,
         private_key_pem=private_pem,
+    )
+
+
+@router.post(
+    "/login",
+    response_model=UserLoginResponse,
+    summary="Authenticate author using username and RSA private key"
+)
+async def login_user(payload: UserLoginRequest):
+    db = await get_database()
+    users_col = db["users"]
+
+    user_doc = await users_col.find_one({"username": payload.username})
+    if not user_doc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or private key"
+        )
+
+    # 1. Validate that the provided private key matches the stored public key
+    public_pem = user_doc.get("public_key_pem", "")
+    if not CryptoService.validate_key_match(payload.private_key_pem, public_pem):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Provided private key does not match this author's registered public key"
+        )
+
+    # 2. Compute canonical hash of provided private key
+    try:
+        computed_hash = CryptoService.compute_private_key_hash(payload.private_key_pem)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid RSA private key: {str(e)}"
+        )
+
+    # 3. Check / update private_key_hash in DB
+    stored_hash = user_doc.get("private_key_hash")
+    if stored_hash:
+        if stored_hash != computed_hash:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Private key hash mismatch"
+            )
+    else:
+        # Legacy record without stored hash: update now
+        await users_col.update_one(
+            {"_id": user_doc["_id"]},
+            {"$set": {"private_key_hash": computed_hash}}
+        )
+
+    user_resp = UserResponse(
+        id=str(user_doc["_id"]),
+        username=user_doc["username"],
+        email=user_doc["email"],
+        public_key_pem=user_doc["public_key_pem"],
+        created_at=user_doc["created_at"]
+    )
+    return UserLoginResponse(
+        user=user_resp,
+        message=f"Welcome back, {user_doc['username']}. Author identity authenticated."
     )
 
 
