@@ -27,10 +27,10 @@ export default function RegisterImage({
   const fileInputRef = useRef(null);
   const keyFileInputRef = useRef(null);
 
-  // Check if active user has a client-side vault key in IndexedDB
+  // Check if active user has a client-side vault key in IndexedDB and chose Remember Me
   useEffect(() => {
     async function checkVault() {
-      if (activeUser?.id) {
+      if (activeUser?.id && activeUser?.isRemembered) {
         const available = await hasVaultKey(activeUser.id);
         setIsVaultActive(available);
       } else {

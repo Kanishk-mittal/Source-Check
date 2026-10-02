@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Download, Copy, Check, AlertTriangle, X, LogIn, UserPlus, Upload, ShieldCheck } from 'lucide-react';
 import { loginUser, registerUser } from '../api';
-import { storeVaultKey } from '../services/vault';
+import { storeVaultKey, deleteVaultKey } from '../services/vault';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode = 'login' }) {
   const [activeTab, setActiveTab] = useState(initialMode); // 'login' | 'register'
@@ -69,6 +69,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
       if (rememberMe) {
         await storeVaultKey(result.user.id, result.user.username, loginPrivateKey, vaultPin);
         vaultSaved = true;
+      } else {
+        await deleteVaultKey(result.user.id);
+        vaultSaved = false;
       }
 
       setLoginPrivateKey('');

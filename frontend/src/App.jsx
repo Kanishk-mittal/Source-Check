@@ -5,6 +5,7 @@ import RegisterImage from './components/RegisterImage';
 import VerifyImage from './components/VerifyImage';
 import MyImages from './components/MyImages';
 import { listImages, getStats } from './api';
+import { deleteVaultKey } from './services/vault';
 
 export default function App() {
   // Authentication state: check sessionStorage for existing session
@@ -49,14 +50,22 @@ export default function App() {
   }, []);
 
   const handleAuthSuccess = (user, vaultSaved) => {
-    setActiveUser(user);
-    sessionStorage.setItem('provenance_active_user', JSON.stringify(user));
+    const userWithVault = { ...user, isRemembered: !!vaultSaved };
+    setActiveUser(userWithVault);
+    sessionStorage.setItem('provenance_active_user', JSON.stringify(userWithVault));
     setCurrentView('my_images');
     setIsAuthModalOpen(false);
     fetchRegistryData();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (activeUser?.id) {
+      try {
+        await deleteVaultKey(activeUser.id);
+      } catch (err) {
+        console.error('Error clearing vault on logout:', err);
+      }
+    }
     setActiveUser(null);
     sessionStorage.removeItem('provenance_active_user');
     setCurrentView('verify');
